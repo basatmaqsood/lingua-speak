@@ -35,7 +35,7 @@ function CategoryLinks() {
           );
         })}
       </div>
-        <p className="text-center">Developed with <IconHeartFilled color="red" className="inline"/> By Basat Maqsood</p>
+        <p className="text-center">Developed with <IconHeartFilled color="red" className="inline"/> By <a href="https://www.linkedin.com/in/basatmaqsood/">Basat Maqsood</a></p>
     </div>
   );
 }

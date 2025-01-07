@@ -5,7 +5,7 @@ import SpeechPlayer from "./Speech/SpeechPlayer";
 import FileUpload from "./inputs/FileUpload";
 import LanguageSelector from './inputs/LanguageSelector'
 
-const languages =['Chinese','Japanese','German', 'Spanish', 'French']
+const languages =['Chinese','Japanese','German', 'Spanish', 'French','Turkish','Urdu']
 
 function OutputTextArea({selectedLanguage, setSelectedLanguage, value}) {
   return (
