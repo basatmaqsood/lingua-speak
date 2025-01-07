@@ -35,7 +35,8 @@ function CategoryLinks() {
           );
         })}
       </div>
-        <p className="text-center">Developed with <IconHeartFilled color="red" className="inline"/> By <a href="https://www.linkedin.com/in/basatmaqsood/" target="_blank" className="no-underline">Basat Maqsood</a></p>
+        <p className="text-center">Developed with <IconHeartFilled color="red" className="inline"/> By <a href="https://www.linkedin.com/in/basatmaqsood/" target="_blank" className="no-underline text-[#f87315] font-bold">Basat Maqsood</a></p>
+      <a target="_blank" href="https://www.linkedin.com/in/basatmaqsood/" className="bg-[#f87315] text-white px-2 py-1 rounded-sm">Visit Portfolio</a>
     </div>
   );
 }
