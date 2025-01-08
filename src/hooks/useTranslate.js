@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 /**
@@ -10,6 +10,8 @@ const useTranslate = (sourceText, selectedLanguage) => {
   const [targetText, setTargetText] = useState(''); // Stores translated text
   const [error, setError] = useState(null); // Handles error state
   const [isLoading, setIsLoading] = useState(false); // Loading state
+  const [retryCount, setRetryCount] = useState(0); // Retry counter
+  const cache = useRef(new Map()); // Cache for translations
 
   useEffect(() => {
     const controller = new AbortController(); // Create an AbortController for cancellation
@@ -18,8 +20,14 @@ const useTranslate = (sourceText, selectedLanguage) => {
     const handleTranslate = async () => {
       if (!sourceText.trim()) return; // Prevent empty API calls
 
-      setIsLoading(true); // Start loading
-      setError(null); // Reset error state
+      const cacheKey = `${sourceText}_${selectedLanguage}`;
+      if (cache.current.has(cacheKey)) {
+        setTargetText(cache.current.get(cacheKey)); // Return cached result
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
 
       try {
         const response = await axios.post(
@@ -42,7 +50,7 @@ const useTranslate = (sourceText, selectedLanguage) => {
             params: {
               key: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
             },
-            signal, // Pass the AbortSignal to axios
+            signal,
           }
         );
 
@@ -50,31 +58,38 @@ const useTranslate = (sourceText, selectedLanguage) => {
           response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
           'Translation failed.';
         setTargetText(data);
+        cache.current.set(cacheKey, data); // Store in cache
+        setRetryCount(0); // Reset retry count on success
       } catch (error) {
         if (axios.isCancel(error)) {
           console.log('Request canceled:', error.message);
-        } else {
-          console.error('Error translating text:', error.status);
-          if(error.status = 429){
-            alert('Gemini API key limit has expired. Kindly check after a while.');
+        } else if (error.response?.status === 429) {
+          console.warn('Rate limit exceeded. Retrying...');
+          setRetryCount((prev) => prev + 1);
+          if (retryCount < 3) {
+            setTimeout(handleTranslate, 2000 * (retryCount + 1)); // Exponential backoff
+          } else {
+            setError('Too many requests. Please try again later.');
           }
-          setError('Error');
+        } else {
+          console.error('Error translating text:', error.message);
+          setError('Translation error. Please try again.');
         }
       } finally {
-        setIsLoading(false); // End loading
+        setIsLoading(false);
       }
     };
 
+    // Debounced API Call
     const timeoutId = setTimeout(() => {
       handleTranslate();
-    }, 500); // Debounced API call
+    }, 1000); // Increased debounce delay
 
-    // Cleanup function to cancel previous requests and timeout
     return () => {
-      controller.abort(); // Cancel the ongoing API request
-      clearTimeout(timeoutId); // Clear the timeout
+      controller.abort();
+      clearTimeout(timeoutId);
     };
-  }, [sourceText, selectedLanguage]);
+  }, [sourceText, selectedLanguage, retryCount]);
 
   return { targetText, isLoading, error };
 };
